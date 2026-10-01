@@ -1,5 +1,55 @@
 export const ACTIVE_PLAN_KEY = 'cognivia_active_study_plan';
 export const QUIZ_HISTORY_KEY = 'cognivia_quiz_history';
+export const PLAN_UPDATED_EVENT = 'cognivia_plan_updated';
+
+/**
+ * Dispatch events across the window so all components in the same tab
+ * react immediately when active study plan changes without page refresh.
+ */
+function notifyPlanUpdate() {
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent(PLAN_UPDATED_EVENT));
+      window.dispatchEvent(new Event('storage'));
+    } catch {
+      // safe fallback
+    }
+  }
+}
+
+/**
+ * Calculate standard plan progress statistics
+ * Reused across Dashboard, Study Planner, and Landing preview
+ * @param {Object|null} plan
+ * @returns {Object|null}
+ */
+export function getPlanStats(plan) {
+  if (!plan || typeof plan !== 'object') return null;
+  const schedule = Array.isArray(plan.dailySchedule) ? plan.dailySchedule : [];
+  const totalDays = Number(plan.duration) || schedule.length || 1;
+  const completedDays = Array.isArray(plan.completedDays)
+    ? plan.completedDays
+    : schedule.filter((d) => d.status === 'completed').map((d) => d.day);
+
+  const completedDaysCount = completedDays.length;
+  const progress = Math.min(100, Math.max(0, Math.round((completedDaysCount / totalDays) * 100)));
+  const daysRemaining = Math.max(0, totalDays - completedDaysCount);
+  const isCompleted = totalDays > 0 && completedDaysCount >= totalDays;
+  const nextDay = schedule.find((d) => !completedDays.includes(d.day));
+
+  return {
+    totalDays,
+    completedDays,
+    completedDaysCount,
+    progress,
+    daysRemaining,
+    isCompleted,
+    nextDay,
+    subject: plan.subject || 'General',
+    topic: plan.topic || 'Active Plan',
+    difficulty: plan.difficulty || '',
+  };
+}
 
 /**
  * Retrieve the active study plan from localStorage
@@ -25,6 +75,7 @@ export function saveActiveStudyPlan(plan) {
   try {
     if (!plan) {
       localStorage.removeItem(ACTIVE_PLAN_KEY);
+      notifyPlanUpdate();
       return null;
     }
     const schedule = Array.isArray(plan.dailySchedule) ? plan.dailySchedule : [];
@@ -43,6 +94,7 @@ export function saveActiveStudyPlan(plan) {
       generatedAt: plan.generatedAt || new Date().toISOString(),
     };
     localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(planToSave));
+    notifyPlanUpdate();
     return planToSave;
   } catch (err) {
     console.error('Failed to save active study plan to localStorage:', err);
@@ -56,6 +108,7 @@ export function saveActiveStudyPlan(plan) {
 export function deleteActiveStudyPlan() {
   try {
     localStorage.removeItem(ACTIVE_PLAN_KEY);
+    notifyPlanUpdate();
   } catch (err) {
     console.error('Failed to remove active study plan from localStorage:', err);
   }

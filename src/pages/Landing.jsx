@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Footer from '../components/Footer';
+import { getActiveStudyPlan, getPlanStats, PLAN_UPDATED_EVENT } from '../utils/storage';
 
 const features = [
   {
@@ -96,10 +98,185 @@ const steps = [
   },
 ];
 
+function getPreviewTopics(schedule, completedDays) {
+  if (!Array.isArray(schedule) || schedule.length === 0) return [];
+
+  const completedList = schedule.filter((d) => completedDays.includes(d.day));
+  const incompleteList = schedule.filter((d) => !completedDays.includes(d.day));
+
+  const items = [];
+
+  if (incompleteList.length === 0) {
+    // All completed: show up to the last 3 completed
+    const slice = completedList.slice(-3);
+    slice.forEach((d) => {
+      items.push({
+        id: `day-${d.day}`,
+        title: d.title || (Array.isArray(d.topics) && d.topics[0]) || `Day ${d.day}`,
+        status: 'completed',
+      });
+    });
+    return items;
+  }
+
+  const activeDay = incompleteList[0];
+
+  if (completedList.length >= 2) {
+    // Show 2 completed and 1 active
+    const recentCompleted = completedList.slice(-2);
+    recentCompleted.forEach((d) => {
+      items.push({
+        id: `day-${d.day}`,
+        title: d.title || (Array.isArray(d.topics) && d.topics[0]) || `Day ${d.day}`,
+        status: 'completed',
+      });
+    });
+    items.push({
+      id: `day-${activeDay.day}`,
+      title: activeDay.title || (Array.isArray(activeDay.topics) && activeDay.topics[0]) || `Day ${activeDay.day}`,
+      status: 'active',
+    });
+  } else if (completedList.length === 1) {
+    // Show 1 completed, 1 active, and up to 1 upcoming
+    items.push({
+      id: `day-${completedList[0].day}`,
+      title: completedList[0].title || (Array.isArray(completedList[0].topics) && completedList[0].topics[0]) || `Day ${completedList[0].day}`,
+      status: 'completed',
+    });
+    items.push({
+      id: `day-${activeDay.day}`,
+      title: activeDay.title || (Array.isArray(activeDay.topics) && activeDay.topics[0]) || `Day ${activeDay.day}`,
+      status: 'active',
+    });
+    if (incompleteList.length > 1) {
+      const nextUpcoming = incompleteList[1];
+      items.push({
+        id: `day-${nextUpcoming.day}`,
+        title: nextUpcoming.title || (Array.isArray(nextUpcoming.topics) && nextUpcoming.topics[0]) || `Day ${nextUpcoming.day}`,
+        status: 'upcoming',
+      });
+    }
+  } else {
+    // 0 completed: show 1 active and up to 2 upcoming
+    items.push({
+      id: `day-${activeDay.day}`,
+      title: activeDay.title || (Array.isArray(activeDay.topics) && activeDay.topics[0]) || `Day ${activeDay.day}`,
+      status: 'active',
+    });
+    incompleteList.slice(1, 3).forEach((d) => {
+      items.push({
+        id: `day-${d.day}`,
+        title: d.title || (Array.isArray(d.topics) && d.topics[0]) || `Day ${d.day}`,
+        status: 'upcoming',
+      });
+    });
+  }
+
+  return items;
+}
+
 function AIPreviewCard() {
-  const progress = 82;
+  const [activePlan, setActivePlan] = useState(() => getActiveStudyPlan());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setActivePlan(getActiveStudyPlan());
+    };
+
+    handleUpdate();
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener(PLAN_UPDATED_EVENT, handleUpdate);
+    window.addEventListener('focus', handleUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener(PLAN_UPDATED_EVENT, handleUpdate);
+      window.removeEventListener('focus', handleUpdate);
+    };
+  }, []);
+
+  const hasPlan = Boolean(
+    activePlan &&
+    typeof activePlan === 'object' &&
+    (activePlan.subject || activePlan.topic || (Array.isArray(activePlan.dailySchedule) && activePlan.dailySchedule.length > 0))
+  );
+
+  if (!hasPlan) {
+    return (
+      <div className="float-card w-full max-w-sm mx-auto lg:mx-0">
+        {/* Outer glow ring */}
+        <div className="relative rounded-2xl p-0.5 bg-gradient-to-br from-indigo-200 via-violet-100 to-indigo-50 shadow-xl">
+          <div className="bg-white rounded-[14px] p-5 space-y-4">
+
+            {/* Card header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 leading-none">Cognivia AI</p>
+                  <p className="text-xs text-slate-400">Study Plan</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
+                No Plan
+              </span>
+            </div>
+
+            {/* Empty state container */}
+            <div className="text-center py-7 px-3 bg-slate-50/70 border border-dashed border-slate-200 rounded-xl">
+              <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-3 text-indigo-600 shadow-xs">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <p className="text-sm font-bold text-slate-800">No active study plan</p>
+              <p className="text-xs text-slate-500 mt-1 max-w-[220px] mx-auto leading-relaxed">
+                Create your study plan to see your progress here.
+              </p>
+              <div className="mt-4">
+                <Link to="/planner">
+                  <Button size="sm" variant="primary">
+                    Create Study Plan
+                    <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = getPlanStats(activePlan);
+  const progress = stats?.progress ?? 0;
+  const completedDaysCount = stats?.completedDaysCount ?? 0;
+  const totalDays = stats?.totalDays ?? 1;
+  const isCompleted = stats?.isCompleted ?? false;
   const circumference = 2 * Math.PI * 20; // r=20
   const offset = circumference - (progress / 100) * circumference;
+
+  const subjectTitle = activePlan.subject || activePlan.topic || 'General';
+
+  const previewTopics = getPreviewTopics(activePlan.dailySchedule, stats?.completedDays || []);
+
+  let rawRec = null;
+  if (Array.isArray(activePlan.recommendations) && activePlan.recommendations.length > 0) {
+    rawRec = activePlan.recommendations[0];
+  } else if (typeof activePlan.recommendations === 'string' && activePlan.recommendations.trim()) {
+    rawRec = activePlan.recommendations.trim();
+  } else if (typeof activePlan.recommendation === 'string' && activePlan.recommendation.trim()) {
+    rawRec = activePlan.recommendation.trim();
+  }
+
+  const aiRecommendation = rawRec ? rawRec.replace(/^["']|["']$/g, '').trim() : null;
 
   return (
     <div className="float-card w-full max-w-sm mx-auto lg:mx-0">
@@ -120,19 +297,33 @@ function AIPreviewCard() {
                 <p className="text-xs text-slate-400">Study Plan</p>
               </div>
             </div>
-            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">Active</span>
+            <Link
+              to="/plan"
+              className={`text-xs font-semibold px-2 py-0.5 rounded-md border transition-colors ${
+                isCompleted
+                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
+                  : 'text-indigo-600 bg-indigo-50 border-indigo-100 hover:bg-indigo-100'
+              }`}
+            >
+              {isCompleted ? 'Completed' : 'Active'}
+            </Link>
           </div>
 
           {/* Subject row */}
-          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
-            <div>
+          <Link
+            to="/plan"
+            className="flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl px-3 py-2.5 transition-colors group"
+          >
+            <div className="min-w-0 pr-2">
               <p className="text-xs text-slate-400 font-medium">Subject</p>
-              <p className="text-sm font-bold text-slate-900 leading-tight">Operating Systems</p>
+              <p className="text-sm font-bold text-slate-900 leading-tight truncate" title={subjectTitle}>
+                {subjectTitle}
+              </p>
             </div>
-            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
             </svg>
-          </div>
+          </Link>
 
           {/* Progress row */}
           <div className="flex items-center gap-4">
@@ -143,64 +334,114 @@ function AIPreviewCard() {
                 <circle
                   cx="26" cy="26" r="20"
                   fill="none"
-                  stroke="#4f46e5"
+                  stroke={isCompleted ? '#059669' : '#4f46e5'}
                   strokeWidth="5"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
                   strokeDashoffset={offset}
                 />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-extrabold text-indigo-700">
+              <span className={`absolute inset-0 flex items-center justify-center text-xs font-extrabold ${isCompleted ? 'text-emerald-700' : 'text-indigo-700'}`}>
                 {progress}%
               </span>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-400 font-medium mb-1">Overall Progress</p>
-              <div className="w-full bg-slate-100 rounded-full h-1.5">
-                <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${progress}%` }} />
+              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-300 ${isCompleted ? 'bg-emerald-600' : 'bg-indigo-600'}`}
+                  style={{ width: `${progress}%` }}
+                />
               </div>
-              <p className="text-xs text-slate-500 mt-1">5 of 7 days on track</p>
+              <p className="text-xs text-slate-500 mt-1 truncate">
+                {completedDaysCount} of {totalDays} {totalDays === 1 ? 'day' : 'days'} completed
+              </p>
             </div>
           </div>
 
           {/* Topics */}
-          <div className="space-y-2">
-            {/* Completed */}
-            {['CPU Scheduling', 'Process Management'].map((t) => (
-              <div key={t} className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-                <span className="w-4 h-4 bg-emerald-500 rounded-md flex items-center justify-center flex-shrink-0">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                <span className="text-xs font-medium text-emerald-800">{t}</span>
-                <span className="ml-auto text-xs text-emerald-600 font-semibold">Done</span>
-              </div>
-            ))}
-            {/* In progress */}
-            <div className="flex items-center gap-2.5 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2">
-              <span className="w-4 h-4 bg-indigo-600 rounded-md flex items-center justify-center flex-shrink-0">
-                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6l4 2" />
-                </svg>
-              </span>
-              <span className="text-xs font-medium text-indigo-800">Memory Management</span>
-              <span className="ml-auto text-xs text-indigo-600 font-semibold">Active</span>
+          {previewTopics.length > 0 && (
+            <div className="space-y-2">
+              {previewTopics.map((item) => {
+                if (item.status === 'completed') {
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2"
+                    >
+                      <span className="w-4 h-4 bg-emerald-500 rounded-md flex items-center justify-center flex-shrink-0">
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
+                      <span className="text-xs font-medium text-emerald-800 truncate" title={item.title}>
+                        {item.title}
+                      </span>
+                      <span className="ml-auto text-xs text-emerald-600 font-semibold flex-shrink-0">
+                        Done
+                      </span>
+                    </div>
+                  );
+                }
+
+                if (item.status === 'active') {
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-2.5 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2"
+                    >
+                      <span className="w-4 h-4 bg-indigo-600 rounded-md flex items-center justify-center flex-shrink-0">
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6l4 2" />
+                        </svg>
+                      </span>
+                      <span className="text-xs font-medium text-indigo-800 truncate" title={item.title}>
+                        {item.title}
+                      </span>
+                      <span className="ml-auto text-xs text-indigo-600 font-semibold flex-shrink-0">
+                        Active
+                      </span>
+                    </div>
+                  );
+                }
+
+                // upcoming
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"
+                  >
+                    <span className="w-4 h-4 bg-slate-200 rounded-md flex items-center justify-center flex-shrink-0">
+                      <svg className="w-2.5 h-2.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" fill="currentColor" />
+                      </svg>
+                    </span>
+                    <span className="text-xs font-medium text-slate-700 truncate" title={item.title}>
+                      {item.title}
+                    </span>
+                    <span className="ml-auto text-xs text-slate-400 font-semibold flex-shrink-0">
+                      Upcoming
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          )}
 
           {/* AI Recommendation */}
-          <div className="bg-violet-50 border border-violet-200 rounded-xl px-3.5 py-3">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <svg className="w-3 h-3 text-violet-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.293.083-.578.2-.85A5.002 5.002 0 0010 4a5 5 0 00-2.2 9.15c.117.272.185.557.2.85h4z" />
-              </svg>
-              <span className="text-xs font-bold text-violet-700 uppercase tracking-wide">AI Recommendation</span>
+          {aiRecommendation && (
+            <div className="bg-violet-50 border border-violet-200 rounded-xl px-3.5 py-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <svg className="w-3 h-3 text-violet-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.293.083-.578.2-.85A5.002 5.002 0 0010 4a5 5 0 00-2.2 9.15c.117.272.185.557.2.85h4z" />
+                </svg>
+                <span className="text-xs font-bold text-violet-700 uppercase tracking-wide">AI Recommendation</span>
+              </div>
+              <p className="text-xs text-violet-900 leading-relaxed">
+                "{aiRecommendation}"
+              </p>
             </div>
-            <p className="text-xs text-violet-900 leading-relaxed">
-              "Review paging and segmentation next."
-            </p>
-          </div>
+          )}
 
         </div>
       </div>
