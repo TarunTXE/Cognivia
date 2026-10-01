@@ -3,7 +3,7 @@
  * Uses VITE_API_URL for the backend base URL.
  */
 
-const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 async function handleResponse(response, defaultError) {
   let data;
@@ -28,7 +28,7 @@ async function handleResponse(response, defaultError) {
  * POST /api/notes
  */
 export async function generateNotes({ topic, difficulty }) {
-  const response = await fetch(`${API_BASE}/api/notes`, {
+  const response = await fetch(`${API_URL}/api/notes`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ topic, difficulty }),
@@ -41,7 +41,7 @@ export async function generateNotes({ topic, difficulty }) {
  * POST /api/study-plan
  */
 export async function generateStudyPlan({ subject, topic, difficulty, goal, duration, dailyTime }) {
-  const response = await fetch(`${API_BASE}/api/study-plan`, {
+  const response = await fetch(`${API_URL}/api/study-plan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -61,7 +61,7 @@ export async function generateStudyPlan({ subject, topic, difficulty, goal, dura
  * POST /api/quiz
  */
 export async function generateQuiz({ topic, difficulty, numQuestions = 5 }) {
-  const response = await fetch(`${API_BASE}/api/quiz`, {
+  const response = await fetch(`${API_URL}/api/quiz`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -78,7 +78,7 @@ export async function generateQuiz({ topic, difficulty, numQuestions = 5 }) {
  * POST /api/evaluate
  */
 export async function evaluateQuiz({ answers, questions }) {
-  const response = await fetch(`${API_BASE}/api/evaluate`, {
+  const response = await fetch(`${API_URL}/api/evaluate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ answers, questions }),
