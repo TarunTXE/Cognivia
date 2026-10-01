@@ -45,7 +45,7 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Cognivia API server running`);
   console.log(`   Environment : ${process.env.NODE_ENV || 'development'}`);
   console.log(`   Port        : ${PORT}`);
@@ -57,5 +57,4 @@ app.listen(PORT, () => {
   console.log(`     POST /api/evaluate`);
   console.log(`      GET /health\n`);
 });
-
 module.exports = app; // export for testing
