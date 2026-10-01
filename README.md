@@ -4,34 +4,38 @@
 
 ### Learn Smarter. Progress Faster.
 
-An AI-powered personalized learning assistant designed to help students plan, learn, practice, and track their progress.
+An AI-powered personalized learning assistant that helps students  
+**plan, learn, practice, evaluate, and improve** — all in one place.
 
 <br>
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-6366F1?style=for-the-badge)](YOUR_VERCEL_URL)
-[![React](https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Gemini](https://img.shields.io/badge/AI-Gemini-8E75B2?style=for-the-badge)](https://ai.google.dev/)
+<a href="https://cognivia-ivory.vercel.app/">
+  <img src="https://img.shields.io/badge/🚀%20Live%20Demo-Cognivia-6366F1?style=for-the-badge" alt="Live Demo">
+</a>
+
+<a href="https://github.com/TarunTXE/Cognivia">
+  <img src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github" alt="GitHub Repository">
+</a>
+
+<br><br>
+
+<img src="docs/landing-page.png" width="92%" alt="Cognivia Landing Page">
 
 </div>
 
 ---
 
-## 🚀 About Cognivia
+## 📌 About Cognivia
 
-**Cognivia** is an AI-powered learning assistant that helps students turn their learning goals into structured study experiences.
+**Cognivia** is an AI-powered personalized learning assistant designed to make studying more structured, interactive, and goal-oriented.
 
-Instead of simply providing information, Cognivia helps learners:
+Students can provide their subject, topic, available study duration, difficulty level, and learning goal. Cognivia then generates personalized learning content and helps track their progress.
 
-- 📚 Create personalized study plans
-- 🤖 Generate AI-powered learning content
-- 📝 Generate notes for specific topics
-- 🧠 Practice through AI-generated quizzes
-- 📊 Track study progress
-- 🎯 Identify weak topics
-- 💡 Receive personalized learning recommendations
+The platform brings together:
 
-The application combines a modern React interface with an Express backend and Google's Gemini API to generate structured learning content.
+**Planning → Learning → Practice → Evaluation → Improvement**
+
+into one learning experience.
 
 ---
 
@@ -39,7 +43,7 @@ The application combines a modern React interface with an Express backend and Go
 
 ### 📚 Personalized Study Plans
 
-Create a study plan based on:
+Create customized study plans based on:
 
 - Subject
 - Topic
@@ -47,106 +51,143 @@ Create a study plan based on:
 - Difficulty level
 - Learning goal
 
-Cognivia generates a structured schedule with learning objectives and key concepts.
+Each generated plan includes structured daily schedules, learning objectives, and key concepts.
 
-### 🤖 AI Notes
+### 🤖 AI-Powered Learning
 
-Generate focused learning notes for a selected topic using Gemini AI.
+Cognivia uses the **Google Gemini API** to generate personalized learning content dynamically.
 
-### 🧠 AI Quizzes
+AI-powered functionality includes:
 
-Generate quizzes based on the learner's study topic and evaluate performance.
+- Study plan generation
+- Topic-specific notes
+- Practice quizzes
+- Learning recommendations
 
-### 📊 Progress Tracking
+### 📝 AI Notes
 
-Track completed study-plan days and monitor learning progress through the dashboard.
+Generate focused learning notes for a selected topic based on the learner's study context.
+
+### 🧠 Interactive Quizzes
+
+Generate quizzes based on the selected learning topic.
+
+Users can:
+
+- Attempt questions
+- Submit answers
+- View their score
+- Review performance
+- Identify topics that require additional practice
+
+### 📊 Progress Dashboard
+
+The dashboard provides a centralized overview of the learner's current learning progress.
+
+It includes:
+
+- Study-plan progress
+- Completed study days
+- Quiz history
+- Weak topics
+- Recommended actions
 
 ### 🎯 Weak Topic Identification
 
-Quiz history is used to identify topics where additional revision may be useful.
+Quiz performance can be used to identify topics where additional revision may be useful.
 
-### 💡 Learning Recommendations
+### 💡 Personalized Recommendations
 
-The dashboard provides recommendations based on the learner's current study plan and quiz performance.
+Cognivia provides recommendations based on the learner's current study plan and quiz performance.
+
+### 💾 Persistent Progress
+
+Study-plan progress and quiz history are stored using browser `localStorage`, allowing progress to persist between sessions without requiring an account in the current MVP.
 
 ---
 
-## 🖥️ Screenshots
+# 🖥️ Screenshots
 
-### Landing Page
+## Landing Page
 
 <div align="center">
 
-<img src="docs/screenshots/landing-page.png" width="90%" alt="Cognivia Landing Page">
+<img src="docs/landing-page.png" width="95%" alt="Cognivia Landing Page">
 
 </div>
 
 ---
 
-### Study Planner & Dashboard
+## Dashboard & Study Planner
 
 <div align="center">
 
-<img src="docs/screenshots/dashboard-planner.png" width="90%" alt="Cognivia Dashboard and Study Planner">
+<img src="docs/dashboard-planner.png" width="95%" alt="Cognivia Dashboard and Study Planner">
 
 </div>
 
 ---
 
-### AI Notes
+## AI Notes
 
 <div align="center">
 
-<img src="docs/screenshots/notes.png" width="90%" alt="Cognivia AI Notes">
+<img src="docs/notes.png" width="95%" alt="Cognivia AI Notes">
 
 </div>
 
 ---
 
-### Quiz
+## Quiz
 
 <div align="center">
 
-<img src="docs/screenshots/quiz.png" width="90%" alt="Cognivia Quiz">
+<img src="docs/quiz.png" width="95%" alt="Cognivia Quiz">
 
 </div>
 
 ---
 
-## ⚙️ How It Works
+# ⚙️ How It Works
 
 ```text
-                ┌─────────────────┐
-                │      User       │
-                └────────┬────────┘
-                         │
-                         ▼
-                ┌─────────────────┐
-                │ React Frontend  │
-                │     + Vite      │
-                └────────┬────────┘
-                         │
-                         ▼
-                ┌─────────────────┐
-                │ Express Backend │
-                │    REST API     │
-                └────────┬────────┘
-                         │
-                         ▼
-                ┌─────────────────┐
-                │   Gemini API    │
-                │  AI Generation  │
-                └────────┬────────┘
-                         │
-                         ▼
-                ┌─────────────────┐
-                │ Learning Content│
-                │ Study / Notes / │
-                │ Quiz / Analysis │
-                └────────┬────────┘
-                         │
-                         ▼
-                ┌─────────────────┐
-                │    Dashboard    │
-                │ Progress & Data │
-                └─────────────────┘
+                         ┌───────────────────┐
+                         │       User        │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │   React Frontend  │
+                         │      + Vite       │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │  Express Backend  │
+                         │      REST API     │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │    Gemini API     │
+                         │   AI Generation   │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                    ┌─────────────────────────────┐
+                    │    Generated Learning      │
+                    │         Content             │
+                    └──────────────┬──────────────┘
+                                   │
+                  ┌────────────────┼────────────────┐
+                  │                │                │
+                  ▼                ▼                ▼
+             Study Plan         AI Notes          Quiz
+                  │                │                │
+                  └────────────────┼────────────────┘
+                                   │
+                                   ▼
+                         ┌───────────────────┐
+                         │     Dashboard     │
+                         │ Progress & Stats  │
+                         └───────────────────┘
